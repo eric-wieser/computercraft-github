@@ -3,6 +3,12 @@ computercraft-github
 
 Seen these cool projects on github? Pain to download? This program is for you!
 
+Installation
+------------
+If only there were some easy way to download this program from github...
+
+Copy both files in `apis/` to `/apis/`, and put `programs/github` wherever you want it.
+
 Usage
 -----
 
