@@ -25,11 +25,11 @@ if action == 'clone' then
 	-- parse input
 	repo, dest = select(2, ...)
 	if not repo then return printError("No repo specified") end
-	if not dest then return printError("No destination specified") end
-	dest = shell.resolve(dest)
 
 	user, repo = repo:match('^(.-)/(.+)$')
 	if not (user and repo) then return printError("Invalid repo name - should be user/repo") end
+
+	dest = shell.resolve(dest or repo)
 
 	-- get file listings
 	local repo = github.repo(user, repo)
