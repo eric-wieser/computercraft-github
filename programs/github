@@ -1,0 +1,56 @@
+local github = dofile("apis/github")
+
+local action = select(1, ...)
+
+local usage = "Usage: github clone <user>/<repo> <destination>"
+
+-- make a bar of the form "[====>    ] 50%"
+function progressbar(f)
+	local left = "["
+	local right = ("]%3d%%"):format(f * 100)
+
+	local gap = select(1, term.getSize()) - #left - #right
+	local at = math.floor(f * (gap + 1))
+	for i = 1, gap do
+		left = left .. (
+			i < at and "=" or
+			i > at and " " or
+			           ">"
+		)
+	end
+	return left .. right
+end
+
+if action == 'clone' then
+	-- parse input
+	repo, dest = select(2, ...)
+	if not repo then return printError("No repo specified") end
+	if not dest then return printError("No destination specified") end
+	dest = shell.resolve(dest)
+
+	user, repo = repo:match('^(.-)/(.+)$')
+	if not (user and repo) then return printError("Invalid repo name - should be user/repo") end
+
+	-- get file listings
+	local repo = github.repo(user, repo)
+	print("Discovering files...")
+	local tree = repo:tree('master')
+
+	-- download the files
+	print("Downloading:")
+	local totalSize = tree.size
+	local size = 0
+	repo:cloneTo(dest, function(item)
+		-- called every time a download completes
+		if getmetatable(item) == github.Blob then
+			size = size + item.size
+			term.clearLine()
+			print("  "..item:fullPath())
+			term.write(progressbar(size/totalSize))
+			term.setCursorPos(1, select(2, term.getCursorPos()))
+		end
+	end)
+	term.scroll(1)
+	return
+end
+print(usage)
