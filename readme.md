@@ -27,3 +27,7 @@ The destination folder is optional, and defaults to the current folder name. Wat
     > ls ccgit
     apis      programs
     readme.md
+    
+---
+
+Thanks to David Kolf for his [dkjson](http://chiselapp.com/user/dhkolf/repository/dkjson/home) module, which made parsing github APIs possible.
