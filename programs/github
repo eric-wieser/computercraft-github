@@ -30,6 +30,7 @@ if action == 'clone' then
 	if not (user and repo) then return printError("Invalid repo name - should be user/repo") end
 
 	dest = shell.resolve(dest or repo)
+  if not fs.isDir(dest) then fs.makeDir(dest)
 
 	-- get file listings
 	local repo = github.repo(user, repo)
