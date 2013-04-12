@@ -1,0 +1,50 @@
+--[[
+-- Github install
+-- For those of us who are limited to pastebin gets, this installer will
+-- download github and the APIs to the correct locations.
+-- Usage: pastebin get 5XJCYuJ8 github-install
+--        github-install
+--]]
+
+function getUrlFile(url)
+  local mrHttpFile = http.get(url)
+  mrHttpFile = mrHttpFile.readAll()
+  return mrHttpFile
+end
+
+function writeFile(filename, data, dir)
+  dir = dir or false
+  if dir then
+    if not fs.isDir(dir) then fs.makeDir(dir) end
+    filename = dir.."/"..filename
+  end
+  local file = fs.open(filename, "w")
+  file.write(data)
+  file.close()
+end
+
+term.clear()
+
+term.setCursorPos(1,5)
+write("-> Getting dkjson API...")
+program = getUrlFile("https://raw.github.com/ogredude/computercraft-github/master/apis/dkjson")
+writeFile('dkjson', program, 'apis')
+write(" Done.")
+
+term.setCursorPos(1,6)
+write("-> Getting github API...")
+program = getUrlFile("https://raw.github.com/ogredude/computercraft-github/master/apis/github")
+writeFile('github', program, 'apis')
+write(" Done.")
+
+term.setCursorPos(1,7)
+write("-> Getting github...")
+program = getUrlFile("https://raw.github.com/ogredude/computercraft-github/master/programs/github")
+writeFile('github', program)
+write(" Done.")
+
+term.setCursorPos(1,8)
+print("Congratulations. Github is installed.")
+print("Usage: github clone <user>/<repository> [destination]")
+print("Destination is optional and defaults to the repository name.")
+print("WARNING: This script will happily overwrite any existing files!")
