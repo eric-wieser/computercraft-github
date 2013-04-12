@@ -100,25 +100,25 @@ Repository.cloneTo = function(self, dest, onProgress)
 	if not fs.exists(dest) then
 		fs.makeDir(dest)
 	elseif not fs.isDir(dest) then
-		error("Destination is a file!")
-	else
-		for item in self:tree('master'):iter() do
-			local gitpath = item:fullPath()
-			local path = fs.combine(dest, gitpath)
-			if getmetatable(item) == Tree then
-				fs.makeDir(path)
-			elseif getmetatable(item) == Blob then
-				local data = http.get(
-					('https://raw.github.com/%s/%s/master/%s')
-						:format(self.user, self.name, gitpath)
-				)
-				local h = fs.open(path, 'w')
-				local text = data.readAll()
-				h.write(text)
-				h.close()
-			end
-			if onProgress then onProgress(item) end
+		return error("Destination is a file!")
+	end
+
+	for item in self:tree('master'):iter() do
+		local gitpath = item:fullPath()
+		local path = fs.combine(dest, gitpath)
+		if getmetatable(item) == Tree then
+			fs.makeDir(path)
+		elseif getmetatable(item) == Blob then
+			local data = http.get(
+				('https://raw.github.com/%s/%s/master/%s')
+					:format(self.user, self.name, gitpath)
+			)
+			local h = fs.open(path, 'w')
+			local text = data.readAll()
+			h.write(text)
+			h.close()
 		end
+		if onProgress then onProgress(item) end
 	end
 end
 Repository.__tostring = function(self) return ("Repo@%s/%s"):format(self.user, self.name) end
