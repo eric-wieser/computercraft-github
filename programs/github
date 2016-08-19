@@ -2,7 +2,7 @@ local github = dofile("apis/github")
 
 local action = select(1, ...)
 
-local usage = "Usage: github clone <user>/<repo> <branch||tag>[optional] <destination>"
+local usage = "Usage: github clone <user>/<repo> <branch||tag> <destination>"
 
 -- make a bar of the form "[====>    ] 50%"
 function progressbar(f)
