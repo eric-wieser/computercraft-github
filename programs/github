@@ -45,7 +45,7 @@ if action == 'clone' then
 	if not treeSelect then
 	  tree = repo:tree('master')
 	else
-		tree = repo:tree(treeSelect)
+	  tree = repo:tree(treeSelect)
 	end
 
 	-- download the files
