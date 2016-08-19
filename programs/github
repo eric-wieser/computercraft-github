@@ -1,4 +1,4 @@
-local github = dofile("apis/github")
+local github = dofile("github.rom/apis/github")
 
 local action = select(1, ...)
 

@@ -5,9 +5,9 @@ Seen these cool projects on github? Pain to download? This program is for you!
 
 Installation
 ------------
-If only there were some easy way to download this program from github...
+The easiest way to install this project on your computercraft computer is by running:
 
-Copy both files in `apis/` to `/apis/`, and put `programs/github` wherever you want it.
+    pastebin run p8PJVxC4
 
 Usage
 -----
@@ -27,7 +27,7 @@ The destination folder is optional, and defaults to the current folder name. Wat
     > ls ccgit
     apis      programs
     readme.md
-    
+
 ---
 
 Thanks to David Kolf for his [dkjson](http://chiselapp.com/user/dhkolf/repository/dkjson/home) module, which made parsing github APIs possible.
