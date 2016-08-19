@@ -27,8 +27,8 @@ if action == 'clone' then
 	dest = select(4,...)
 
 	if not dest then
-		dest = treeSelect
-		treeSelect = nil
+	  dest = treeSelect
+	  treeSelect = nil
 	end
 
 	if not repo then return printError("No repo specified") end
