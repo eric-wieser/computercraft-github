@@ -12,7 +12,7 @@ Copy both files in `apis/` to `/apis/`, and put `programs/github` wherever you w
 Usage
 -----
 
-    github clone <user>/<repo name> [branch||tag] [destination folder]
+    github clone <user>/<repo name> [branch|tag] [destination folder]
 
 The branch or tag argument is optional, and defaults to 'master'.
 
