@@ -103,7 +103,7 @@ Repository.cloneTo = function(self, dest, onProgress)
 		return error("Destination is a file!")
 	end
 
-	for item in self:tree(self.sha):iter() do
+	for item in self:tree(sha):iter() do
 		local gitpath = item:fullPath()
 		local path = fs.combine(dest, gitpath)
 		if getmetatable(item) == Tree then
@@ -111,7 +111,7 @@ Repository.cloneTo = function(self, dest, onProgress)
 		elseif getmetatable(item) == Blob then
 			local data = http.get(
 				('https://raw.github.com/%s/%s/%s/%s')
-					:format(self.user, self.name, self.sha, gitpath)
+					:format(self.user, self.name, sha, gitpath)
 			)
 			local h = fs.open(path, 'w')
 			local text = data.readAll()
