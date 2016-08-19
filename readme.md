@@ -12,7 +12,7 @@ Copy both files in `apis/` to `/apis/`, and put `programs/github` wherever you w
 Usage
 -----
 
-    github clone <user>/<repo name> [destination folder]
+    github clone <user>/<repo name> <branch||tag>[optional] [destination folder]
 
 The destination folder is optional, and defaults to the current folder name. Watch out - this script will happily overwrite any existing files!
 
@@ -27,7 +27,7 @@ The destination folder is optional, and defaults to the current folder name. Wat
     > ls ccgit
     apis      programs
     readme.md
-    
+
 ---
 
 Thanks to David Kolf for his [dkjson](http://chiselapp.com/user/dhkolf/repository/dkjson/home) module, which made parsing github APIs possible.
