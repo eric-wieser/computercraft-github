@@ -11,7 +11,7 @@ David Kolf's JSON module for Lua 5.1/5.2
 This module writes no global values, not even the module table.
 Import it using
 
-    json = require ("github.rom/apis/dkjson")
+    json = require ("dkjson")
 
 Exported functions and values:
 

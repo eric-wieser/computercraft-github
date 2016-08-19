@@ -33,6 +33,8 @@ for key, path in pairs(FILES) do
   makeFile(path, response)
 end
 
-fs.copy('github.rom/programs/github', 'github')
+f = fs.open('github', 'w')
+f.write("dofile('github.rom/programs/github')")
+f.close()
 print("github by Eric Wieser installed!")
 print("Usage: github clone <user>/<repo name> [destination folder]")
