@@ -2,7 +2,7 @@ local github = dofile("apis/github")
 
 local action = select(1, ...)
 
-local usage = "Usage: github clone <user>/<repo> <destination>"
+local usage = "Usage: github clone <user>/<repo> <branch||tag>[optional] <destination>"
 
 -- make a bar of the form "[====>    ] 50%"
 function progressbar(f)
@@ -23,7 +23,14 @@ end
 
 if action == 'clone' then
 	-- parse input
-	repo, dest = select(2, ...)
+	repo, treeSelect = select(2, ...)
+	dest = select(4,...)
+
+	if not dest then
+	  dest = treeSelect
+	  treeSelect = nil
+	end
+
 	if not repo then return printError("No repo specified") end
 
 	user, repo = repo:match('^(.-)/(.+)$')
@@ -34,7 +41,12 @@ if action == 'clone' then
 	-- get file listings
 	local repo = github.repo(user, repo)
 	print("Discovering files...")
-	local tree = repo:tree('master')
+	local tree = nil
+	if not treeSelect then
+	  tree = repo:tree('master')
+	else
+	  tree = repo:tree(treeSelect)
+	end
 
 	-- download the files
 	print("Downloading:")
