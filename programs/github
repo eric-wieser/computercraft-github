@@ -46,7 +46,7 @@ if action == 'clone' then
 	print("Downloading:")
 	local totalSize = tree.size
 	local size = 0
-	repo:cloneTo(treeName, dest, function(item)
+	tree:cloneTo(dest, function(item)
 		-- called every time a download completes
 		if getmetatable(item) == github.Blob then
 			size = size + item.size

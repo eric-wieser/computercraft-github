@@ -78,6 +78,31 @@ Tree.iter = function(self)
 		walkTree(self, 0)
 	end)
 end
+Tree.cloneTo = function(self, dest, onProgress)
+	if not fs.exists(dest) then
+		fs.makeDir(dest)
+	elseif not fs.isDir(dest) then
+		return error("Destination is a file!")
+	end
+
+	for item in self:iter() do
+		local gitpath = item:fullPath()
+		local path = fs.combine(dest, gitpath)
+		if getmetatable(item) == Tree then
+			fs.makeDir(path)
+		elseif getmetatable(item) == Blob then
+			local data = http.get(
+				('https://raw.github.com/%s/%s/%s/%s')
+					:format(self.repo.user, self.repo.name, self.sha, gitpath)
+			)
+			local h = fs.open(path, 'w')
+			local text = data.readAll()
+			h.write(text)
+			h.close()
+		end
+		if onProgress then onProgress(item) end
+	end
+end
 Tree.fullPath = Blob.fullPath
 
 -- A class for a repository
@@ -95,32 +120,6 @@ Repository.tree = function(self, sha)
 		__repoPriv[self].trees[sha] = Tree.new(self, sha)
 	end
 	return __repoPriv[self].trees[sha]
-end
-Repository.cloneTo = function(self, treeName, dest, onProgress)
-  treeName = treeName or "master"
-	if not fs.exists(dest) then
-		fs.makeDir(dest)
-	elseif not fs.isDir(dest) then
-		return error("Destination is a file!")
-	end
-
-	for item in self:tree(treeName):iter() do
-		local gitpath = item:fullPath()
-		local path = fs.combine(dest, gitpath)
-		if getmetatable(item) == Tree then
-			fs.makeDir(path)
-		elseif getmetatable(item) == Blob then
-			local data = http.get(
-				('https://raw.github.com/%s/%s/%s/%s')
-					:format(self.user, self.name, treeName, gitpath)
-			)
-			local h = fs.open(path, 'w')
-			local text = data.readAll()
-			h.write(text)
-			h.close()
-		end
-		if onProgress then onProgress(item) end
-	end
 end
 Repository.__tostring = function(self) return ("Repo@%s/%s"):format(self.user, self.name) end
 
