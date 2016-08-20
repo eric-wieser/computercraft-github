@@ -96,15 +96,15 @@ Repository.tree = function(self, sha)
 	end
 	return __repoPriv[self].trees[sha]
 end
-Repository.cloneTo = function(self, sha, dest, onProgress)
-  sha = sha or "master"
+Repository.cloneTo = function(self, treeName, dest, onProgress)
+  treeName = treeName or "master"
 	if not fs.exists(dest) then
 		fs.makeDir(dest)
 	elseif not fs.isDir(dest) then
 		return error("Destination is a file!")
 	end
 
-	for item in self:tree(sha):iter() do
+	for item in self:tree(treeName):iter() do
 		local gitpath = item:fullPath()
 		local path = fs.combine(dest, gitpath)
 		if getmetatable(item) == Tree then
@@ -112,7 +112,7 @@ Repository.cloneTo = function(self, sha, dest, onProgress)
 		elseif getmetatable(item) == Blob then
 			local data = http.get(
 				('https://raw.github.com/%s/%s/%s/%s')
-					:format(self.user, self.name, sha, gitpath)
+					:format(self.user, self.name, treeName, gitpath)
 			)
 			local h = fs.open(path, 'w')
 			local text = data.readAll()

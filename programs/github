@@ -23,11 +23,11 @@ end
 
 if action == 'clone' then
 	-- parse input
-	local repo, sha, dest = select(2, ...)
+	local repo, treeName, dest = select(2, ...)
 
 	if not dest then
-	  dest = sha
-	  sha = 'master'
+	  dest = treeName
+	  treeName = 'master'
 	end
 
 	if not repo then return printError("No repo specified") end
@@ -40,13 +40,13 @@ if action == 'clone' then
 	-- get file listings
 	local repo = github.repo(user, repo)
 	print("Discovering files...")
-	local tree = repo:tree(sha)
+	local tree = repo:tree(treeName)
 
 	-- download the files
 	print("Downloading:")
 	local totalSize = tree.size
 	local size = 0
-	repo:cloneTo(sha, dest, function(item)
+	repo:cloneTo(treeName, dest, function(item)
 		-- called every time a download completes
 		if getmetatable(item) == github.Blob then
 			size = size + item.size
