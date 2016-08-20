@@ -3,105 +3,105 @@ local JSON = dofile("apis/dkjson")
 -- Build a github API url, trying to authenticate (not tested)
 local auth
 local function getAPI(path)
-	local url
-	if auth and auth.type == 'basic' then
-		url = ('https://%s:%s@api.github.com/%s'):format(auth.user, auth.pass, path)
-	else
-		url = ('https://api.github.com/%s'):format(path)
-	end
-	local req = http.get(url)
-	if req then
-		return JSON.decode(req.readAll())
-	else
-		error('Could not get github API from ' ..path)
-	end
+  local url
+  if auth and auth.type == 'basic' then
+    url = ('https://%s:%s@api.github.com/%s'):format(auth.user, auth.pass, path)
+  else
+    url = ('https://api.github.com/%s'):format(path)
+  end
+  local req = http.get(url)
+  if req then
+    return JSON.decode(req.readAll())
+  else
+    error('Could not get github API from ' ..path)
+  end
 end
 
 -- A class for a blob (aka a file)
 local Blob = {}
 Blob.__index = Blob
 Blob.new = function(repo, sha, path)
-	return setmetatable({repo=repo, sha=sha, path=path}, Blob)
+  return setmetatable({repo=repo, sha=sha, path=path}, Blob)
 end
 Blob.fullPath = function(self)
-	if self.parent then
-		return fs.combine(self.parent:fullPath(), self.path)
-	else
-		return self.path
-	end
+  if self.parent then
+    return fs.combine(self.parent:fullPath(), self.path)
+  else
+    return self.path
+  end
 end
 
 -- A class for a tree (aka a folder)
 local Tree = {}
 Tree.__index = Tree
 Tree.new = function(repo, sha, path)
-	local data = getAPI(
-		('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha)
-	)
-	if data.tree then
-		local tree = setmetatable({
-			repo=repo, sha=data.sha,
-			path=path or '', size=0,
-			contents={}
-		}, Tree)
-		for _, childdata in ipairs(data.tree) do
-			childdata.fullPath = fs.combine(tree:fullPath(), childdata.path)
-			local child
-			if childdata.type == 'blob' then
-				child = Blob.new(repo, childdata.sha, childdata.path)
-				child.size = childdata.size
-			elseif childdata.type == 'tree' then
-				child = Tree.new(repo, childdata.sha, childdata.path)
-			else
-				error("uh oh", JSON.encode(childdata))
-				child = childdata
-			end
-			tree.size = tree.size + child.size
-			child.parent = tree
-			table.insert(tree.contents, child)
-		end
-		return tree
-	else
-		error("uh oh", JSON.encode(data))
-	end
+  local data = getAPI(
+    ('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha)
+  )
+  if data.tree then
+    local tree = setmetatable({
+      repo=repo, sha=data.sha,
+      path=path or '', size=0,
+      contents={}
+    }, Tree)
+    for _, childdata in ipairs(data.tree) do
+      childdata.fullPath = fs.combine(tree:fullPath(), childdata.path)
+      local child
+      if childdata.type == 'blob' then
+        child = Blob.new(repo, childdata.sha, childdata.path)
+        child.size = childdata.size
+      elseif childdata.type == 'tree' then
+        child = Tree.new(repo, childdata.sha, childdata.path)
+      else
+        error("uh oh", JSON.encode(childdata))
+        child = childdata
+      end
+      tree.size = tree.size + child.size
+      child.parent = tree
+      table.insert(tree.contents, child)
+    end
+    return tree
+  else
+    error("uh oh", JSON.encode(data))
+  end
 end
 local function walkTree(t, level)
-	for _, item in ipairs(t.contents) do
-		coroutine.yield(item, level)
-		if getmetatable(item) == Tree then
-			walkTree(item, level + 1)
-		end
-	end
+  for _, item in ipairs(t.contents) do
+    coroutine.yield(item, level)
+    if getmetatable(item) == Tree then
+      walkTree(item, level + 1)
+    end
+  end
 end
 Tree.iter = function(self)
-	return coroutine.wrap(function()
-		walkTree(self, 0)
-	end)
+  return coroutine.wrap(function()
+    walkTree(self, 0)
+  end)
 end
 Tree.cloneTo = function(self, dest, onProgress)
-	if not fs.exists(dest) then
-		fs.makeDir(dest)
-	elseif not fs.isDir(dest) then
-		return error("Destination is a file!")
-	end
+  if not fs.exists(dest) then
+    fs.makeDir(dest)
+  elseif not fs.isDir(dest) then
+    return error("Destination is a file!")
+  end
 
-	for item in self:iter() do
-		local gitpath = item:fullPath()
-		local path = fs.combine(dest, gitpath)
-		if getmetatable(item) == Tree then
-			fs.makeDir(path)
-		elseif getmetatable(item) == Blob then
-			local data = http.get(
-				('https://raw.github.com/%s/%s/%s/%s')
-					:format(self.repo.user, self.repo.name, self.sha, gitpath)
-			)
-			local h = fs.open(path, 'w')
-			local text = data.readAll()
-			h.write(text)
-			h.close()
-		end
-		if onProgress then onProgress(item) end
-	end
+  for item in self:iter() do
+    local gitpath = item:fullPath()
+    local path = fs.combine(dest, gitpath)
+    if getmetatable(item) == Tree then
+      fs.makeDir(path)
+    elseif getmetatable(item) == Blob then
+      local data = http.get(
+        ('https://raw.github.com/%s/%s/%s/%s')
+          :format(self.repo.user, self.repo.name, self.sha, gitpath)
+      )
+      local h = fs.open(path, 'w')
+      local text = data.readAll()
+      h.write(text)
+      h.close()
+    end
+    if onProgress then onProgress(item) end
+  end
 end
 Tree.fullPath = Blob.fullPath
 
@@ -110,23 +110,23 @@ local __repoPriv = setmetatable({}, {mode='k'})
 local Repository = {}
 Repository.__index = Repository
 Repository.new = function(user, name)
-	local r = setmetatable({user=user, name=name}, Repository)
-	__repoPriv[r] = {trees={}}
-	return r
+  local r = setmetatable({user=user, name=name}, Repository)
+  __repoPriv[r] = {trees={}}
+  return r
 end
 Repository.tree = function(self, sha)
-	sha = sha or "master"
-	if not __repoPriv[self].trees[sha] then
-		__repoPriv[self].trees[sha] = Tree.new(self, sha)
-	end
-	return __repoPriv[self].trees[sha]
+  sha = sha or "master"
+  if not __repoPriv[self].trees[sha] then
+    __repoPriv[self].trees[sha] = Tree.new(self, sha)
+  end
+  return __repoPriv[self].trees[sha]
 end
 Repository.__tostring = function(self) return ("Repo@%s/%s"):format(self.user, self.name) end
 
 -- Export members
 local github = {}
 github.basicAuth = function(user, pass)
-	auth = {type='basic', user=user, pass=pass}
+  auth = {type='basic', user=user, pass=pass}
 end
 github.Repository = Repository
 github.Blob = Blob
