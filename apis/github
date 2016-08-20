@@ -96,7 +96,8 @@ Repository.tree = function(self, sha)
 	end
 	return __repoPriv[self].trees[sha]
 end
-Repository.cloneTo = function(self, dest, onProgress)
+Repository.cloneTo = function(self, sha, dest, onProgress)
+  sha = sha or "master"
 	if not fs.exists(dest) then
 		fs.makeDir(dest)
 	elseif not fs.isDir(dest) then

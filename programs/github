@@ -23,7 +23,7 @@ end
 
 if action == 'clone' then
 	-- parse input
-	repo, sha, dest = select(2, ...)
+	local repo, sha, dest = select(2, ...)
 
 	if not dest then
 	  dest = sha
@@ -40,13 +40,13 @@ if action == 'clone' then
 	-- get file listings
 	local repo = github.repo(user, repo)
 	print("Discovering files...")
-	tree = repo:tree(sha)
+	local tree = repo:tree(sha)
 
 	-- download the files
 	print("Downloading:")
 	local totalSize = tree.size
 	local size = 0
-	repo:cloneTo(dest, function(item)
+	repo:cloneTo(sha, dest, function(item)
 		-- called every time a download completes
 		if getmetatable(item) == github.Blob then
 			size = size + item.size
