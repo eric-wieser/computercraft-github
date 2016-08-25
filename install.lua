@@ -29,16 +29,6 @@ local function makeFile(file_path, data)
  file.close()
 end
 
-for key, path in pairs(FILES) do
-  local try = 0
-  local status, response = request(path)
-  while status ~= 200 and try <= 3 do
-    status, response = request(path)
-    try = try + 1
-  end
-  makeFile(path, response)
-end
-
 local function rewriteDofile(filename, required)
   filename = ('github.rom/%s'):format(filename)
   local r = fs.open(filename, 'r')
@@ -51,6 +41,20 @@ local function rewriteDofile(filename, required)
 end
 
 -- install github
+for key, path in pairs(FILES) do
+  local try = 0
+  local status, response = request(path)
+  while status ~= 200 and try <= 3 do
+    status, response = request(path)
+    try = try + 1
+  end
+  if status then
+    makeFile(path, response)
+  else
+    printError(('Unable to download %s'):format(path))
+  end
+end
+
 rewriteDofile('apis/github', 'apis/dkjson')
 rewriteDofile('programs/github', 'apis/github')
 fs.move('github.rom/github', 'github')
