@@ -7,7 +7,9 @@ Installation
 ------------
 The easiest way to install this project on your computercraft computer is by running:
 
-    pastebin run p8PJVxC4
+    pastebin run p8PJVxC4 [<branch>|<tag>]
+
+The branch or tag argument is optional, and defaults to 'master'.
 
 Usage
 -----
@@ -21,6 +23,7 @@ The destination folder is optional, and defaults to the current folder name. Wat
     > github clone eric-wieser/computercraft-github ccgit
     Discovering files...
     Downloading:
+      github
       readme.md
       apis/dkjson
       apis/github
@@ -28,7 +31,7 @@ The destination folder is optional, and defaults to the current folder name. Wat
     [============================================] 100%
     > ls ccgit
     apis      programs
-    readme.md
+    github readme.md
 
 ---
 

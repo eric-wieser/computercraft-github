@@ -1,12 +1,18 @@
 -- Easy Installer for computercraft-github by Eric Wieser
 -- https://github.com/eric-wieser/computercraft-github
 
-local REPO_BASE = 'https://raw.githubusercontent.com/eric-wieser/computercraft-github/master/'
+local tree = select(1,...)
+if not tree then
+  tree = 'master'
+end
+
+local REPO_BASE = ('https://raw.githubusercontent.com/eric-wieser/computercraft-github/%s/'):format(tree)
 
 local FILES = {
   'apis/dkjson',
   'apis/github',
-  'programs/github'
+  'programs/github',
+  'github'
 }
 
 local function request(url_path)
@@ -23,6 +29,18 @@ local function makeFile(file_path, data)
  file.close()
 end
 
+local function rewriteDofile(filename, required)
+  filename = ('github.rom/%s'):format(filename)
+  local r = fs.open(filename, 'r')
+  local data = r.readAll()
+  r.close()
+  local w = fs.open(filename, 'w')
+  data = data:gsub(required, ('github.rom/%s'):format(required))
+  w.write(data)
+  w.close()
+end
+
+-- install github
 for key, path in pairs(FILES) do
   local try = 0
   local status, response = request(path)
@@ -30,11 +48,15 @@ for key, path in pairs(FILES) do
     status, response = request(path)
     try = try + 1
   end
-  makeFile(path, response)
+  if status then
+    makeFile(path, response)
+  else
+    printError(('Unable to download %s'):format(path))
+  end
 end
 
-f = fs.open('github', 'w')
-f.write("dofile('github.rom/programs/github')")
-f.close()
+rewriteDofile('apis/github', 'apis/dkjson')
+rewriteDofile('programs/github', 'apis/github')
+fs.move('github.rom/github', 'github')
 print("github by Eric Wieser installed!")
 print("Usage: github clone <user>/<repo name> [destination folder]")

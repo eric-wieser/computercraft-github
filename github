@@ -1,0 +1,3 @@
+f = loadfile('github.rom/programs/github')
+setfenv(f, getfenv())
+f(...)
