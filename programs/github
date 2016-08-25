@@ -1,8 +1,37 @@
 local github = dofile("apis/github")
 
-local action = select(1, ...)
+local selectedAction = select(1, ...)
+local passed = { select(2, ...) }
 
-local usage = "Usage: github clone <user>/<repo> [<branch>|<tag>] [<destination>]"
+local subcommands = {
+	clone = {
+		usage = "github clone <user>/<repo> [-b <branchname> | -t <tagname>] [<destination>] [-a <username>]",
+		flags = {
+			['-b'] = 'branch',
+			['--branch'] = 'branch',
+			['-t'] = 'tag',
+			['--tag'] = 'tag',
+			['-a'] = 'authed',
+			['-auth'] = 'authed'
+		}
+	},
+	auth = {
+		usage = "github auth <user> [<api token> | -d ]",
+		flags = {
+			['-d'] = 'delete',
+			['--delete'] = 'delete'
+		}
+	}
+}
+
+local action = subcommands[selectedAction]
+if not action then
+	for k, v in pairs(subcommands) do
+		print(v.usage)
+		print(" ")
+	end
+	return
+end
 
 -- make a bar of the form "[====>    ] 50%"
 function progressbar(f)
@@ -21,14 +50,39 @@ function progressbar(f)
 	return left .. right
 end
 
-if action == 'clone' then
-	-- parse input
-	local repo, treeName, dest = select(2, ...)
-
-	if not dest then
-		dest = treeName
-		treeName = 'master'
+-- get flag arguments
+local function findFlag(arg)
+	if arg.sub(1,1) == '-' then
+		if not action.flags[arg] then
+			return printError(('Unknown flag argument %s'):format(arg))
+		end
 	end
+	return action.flags[arg]
+end
+
+local args = {}
+local flags = {}
+local lastFlagged = 0
+for k, arg in pairs(passed) do
+	if k ~= lastFlagged then
+		local flagName = findFlag(arg)
+		if flagName then
+			flags[flagName] = passed[k + 1] or true
+			lastFlagged = k + 1 or true
+		else
+			table.insert(args, arg)
+		end
+	end
+end
+
+if flags.branch and flags.tag then
+	return printError('--branch and --tag cannot both be specified')
+end
+
+if action == subcommands.clone then
+	-- parse input
+	local repo, dest = args[1], args[2]
+	local treeName = flags.branch or flags.tag or 'master'
 
 	if not repo then return printError("No repo specified") end
 
@@ -37,8 +91,19 @@ if action == 'clone' then
 
 	dest = shell.resolve(dest or repo)
 
+	local auth = nil
+
+	if flags.authed then
+		-- if no user is found auth should remain nil.
+		auth = github.Auth.get(flags.authed)
+	end
+
+	if flags.authed and not auth then
+		return printError("Unknown user! Add one with 'git auth'")
+	end
+
 	-- get file listings
-	local repo = github.repo(user, repo)
+	local repo = github.repo(user, repo, auth)
 	print("Discovering files...")
 	local tree = repo:tree(treeName)
 
@@ -59,4 +124,22 @@ if action == 'clone' then
 	term.scroll(1)
 	return
 end
-print(usage)
+
+if action == subcommands.auth then
+	local user, token = args[1], args[2]
+	if not user then return printError("No user specified.") end
+
+	if flags.delete then
+		github.Auth.delete(user)
+		print(('Deleted github token for user %s'):format(user))
+	else
+		if not token then return printError("No token specified.") end
+		local auth = github.Auth.new('basic', user, token)
+		auth:save()
+		print(('Saved github token for user %s'):format(auth.user))
+	end
+
+	return
+end
+
+print(action.usage)

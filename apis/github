@@ -1,11 +1,10 @@
 local JSON = dofile("apis/dkjson")
 
 -- Build a github API url, trying to authenticate (not tested)
-local auth
-local function getAPI(path)
+local function getAPI(path, auth)
 	local url
 	if auth and auth.type == 'basic' then
-		url = ('https://%s:%s@api.github.com/%s'):format(auth.user, auth.pass, path)
+		url = ('https://%s:%s@api.github.com/%s'):format(auth.user, auth.token, path)
 	else
 		url = ('https://api.github.com/%s'):format(path)
 	end
@@ -15,6 +14,42 @@ local function getAPI(path)
 	else
 		error('Could not get github API from ' ..path)
 	end
+end
+
+-- A class for authorization
+local authFile = '.github-auth'
+local function writeAuth(data)
+	f = fs.open(authFile, 'w')
+	f.write(textutils.serialize(data))
+	f.close()
+end
+local Auth = {}
+Auth.__index = Auth
+Auth.new = function(type, user, token)
+	return setmetatable({type=type, user=user, token=token}, Auth)
+end
+Auth.getAll = function()
+	local authTable = {}
+	if fs.exists(authFile) then
+		f = fs.open(authFile, 'r')
+		authTable = textutils.unserialize(f.readAll())
+		f.close()
+	end
+	return authTable
+end
+Auth.get = function(user)
+	local authTable = Auth.getAll()
+	return authTable[user]
+end
+Auth.save = function(self)
+	local authTable = Auth.getAll()
+	authTable[self.user] = self
+	writeAuth(authTable)
+end
+Auth.delete = function(user)
+	local authTable = Auth.getAll()
+	authTable[user] = nil
+	writeAuth(authTable)
 end
 
 -- A class for a blob (aka a file)
@@ -36,7 +71,8 @@ local Tree = {}
 Tree.__index = Tree
 Tree.new = function(repo, sha, path)
 	local data = getAPI(
-		('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha)
+		('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha),
+		repo.auth
 	)
 	if data.tree then
 		local tree = setmetatable({
@@ -109,8 +145,8 @@ Tree.fullPath = Blob.fullPath
 local __repoPriv = setmetatable({}, {mode='k'})
 local Repository = {}
 Repository.__index = Repository
-Repository.new = function(user, name)
-	local r = setmetatable({user=user, name=name}, Repository)
+Repository.new = function(user, name, auth)
+	local r = setmetatable({user=user, name=name, auth=auth}, Repository)
 	__repoPriv[r] = {trees={}}
 	return r
 end
@@ -125,11 +161,9 @@ Repository.__tostring = function(self) return ("Repo@%s/%s"):format(self.user, s
 
 -- Export members
 local github = {}
-github.basicAuth = function(user, pass)
-	auth = {type='basic', user=user, pass=pass}
-end
 github.Repository = Repository
 github.Blob = Blob
 github.Tree = Tree
+github.Auth = Auth
 github.repo = Repository.new
 return github
