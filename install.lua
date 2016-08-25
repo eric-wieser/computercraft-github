@@ -29,16 +29,17 @@ local function makeFile(file_path, data)
  file.close()
 end
 
-local function rewriteDofile(filename, required)
-  filename = ('github.rom/%s'):format(filename)
-  oldDo = ('dofile("%s'):format(required)
-  local r = fs.open(filename, 'r')
-  local data = r.readAll()
-  r.close()
-  local w = fs.open(filename, 'w')
-  data = data:gsub(oldDo, ('dofile("github.rom/%s'):format(required))
-  w.write(data)
-  w.close()
+local function rewriteDofiles()
+  for _, file in pairs(files) do
+    local filename = ('github.rom/%s'):format(file)
+    local r = fs.open(filename, 'r')
+    local data = r.readAll()
+    r.close()
+    local w = fs.open(filename, 'w')
+    data = data.gsub('dofile("', 'dofile("github.rom/')
+    w.write(data)
+    w.close()
+  end
 end
 
 -- install github
@@ -59,8 +60,7 @@ for key, path in pairs(FILES) do
   end
 end
 
-rewriteDofile('apis/github', 'apis/dkjson')
-rewriteDofile('programs/github', 'apis/github')
+rewriteDofiles()
 fs.move('github.rom/github', 'github')
 print("github by Eric Wieser installed!")
 dofile('github')
