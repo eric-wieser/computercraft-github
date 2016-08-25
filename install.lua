@@ -1,12 +1,18 @@
 -- Easy Installer for computercraft-github by Eric Wieser
 -- https://github.com/eric-wieser/computercraft-github
 
-local REPO_BASE = 'https://raw.githubusercontent.com/eric-wieser/computercraft-github/master/'
+local tree = select(1,...)
+if not tree then
+  tree = 'master'
+end
+
+local REPO_BASE = ('https://raw.githubusercontent.com/eric-wieser/computercraft-github/%s/'):format(tree)
 
 local FILES = {
   'apis/dkjson',
   'apis/github',
   'programs/github'
+  'github'
 }
 
 local function request(url_path)
@@ -33,8 +39,22 @@ for key, path in pairs(FILES) do
   makeFile(path, response)
 end
 
-f = fs.open('github', 'w')
-f.write("dofile('github.rom/programs/github')")
-f.close()
+local function rewriteDofile(filename, required)
+  filename = ('github.rom/%s'):format(filename)
+  local r = fs.open(filename, 'r')
+  local data = r.readAll()
+  r.close()
+  local w = fs.open(filename, 'w')
+  data = data:gsub(required, ('github.rom/%s'):format(required))
+  w.write(data)
+  w.close()
+end
+
+-- install github
+rewriteDofile('apis/github', 'apis/dkjson')
+rewriteDofile('programs/github', 'apis/github')
+fs.move('github.rom/github', 'github')
+
+
 print("github by Eric Wieser installed!")
 print("Usage: github clone <user>/<repo name> [destination folder]")

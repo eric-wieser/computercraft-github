@@ -1,4 +1,4 @@
-local JSON = dofile("github.rom/apis/dkjson")
+local JSON = dofile("apis/dkjson")
 
 -- Build a github API url, trying to authenticate (not tested)
 local auth
