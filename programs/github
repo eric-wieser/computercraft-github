@@ -2,7 +2,7 @@ local github = dofile("apis/github")
 
 local action = select(1, ...)
 
-local usage = "Usage: github clone <user>/<repo> [<branch>|<tag>] [<destination>]"
+local usage = "Usage: github clone <user>/<repo> [-b <branchname> | -t <tagname>] [-a <username>:<password>] [<destination>]"
 
 -- make a bar of the form "[====>    ] 50%"
 function progressbar(f)
@@ -21,13 +21,61 @@ function progressbar(f)
 	return left .. right
 end
 
+-- get flag arguments
+local function findFlag(arg)
+	local accepted = {
+		{ name = 'branch', flags = { '-b', '--branch' } },
+		{ name = 'tag', flags = { '-t', '--tag' } },
+		{ name = 'auth', flags = { '-a', '--auth' } }
+	}
+	local isFlag, flagName = false, nil
+	if arg:sub(1,1) == '-' then
+		for _, flagType in pairs(accepted) do
+			for _, flag in pairs(flagType.flags) do
+				if arg == flag then
+					isFlag = true
+					flagName = flagType.name
+					return isFlag, flagName
+				end
+			end
+		end
+		if not isFlag then
+			return printError('Unknown flag argument '..arg)
+		end
+	end
+	return isFlag, flagName
+end
+
+local passed = {...}
+local args = {}
+local flags = {}
+local flagValue = ''
+for k, arg in pairs(passed) do
+	local isFlag, flagName = findFlag(arg)
+	if isFlag then
+		flags[flagName] = passed[k + 1]
+		flagValue = flags[flagName]
+	elseif arg ~= action and arg ~= flagValue then
+		table.insert(args, arg)
+	end
+end
+
+if flags.branch and flags.tag then
+	return printError('please specify a branch or tag.')
+end
+
 if action == 'clone' then
 	-- parse input
-	local repo, treeName, dest = select(2, ...)
+	local repo, dest = args[1], args[2]
+	local treeName = flags.branch or flags.tag or 'master'
 
-	if not dest then
-		dest = treeName
-		treeName = 'master'
+	if flags.auth then
+		local authUser, authPass = flags.auth:match('([^:]+):([^:]+)')
+		if not authUser or not authPass then
+			return printError('Invalid username password - should be username:password')
+		else
+			github.basicAuth(authUser,authPass)
+		end
 	end
 
 	if not repo then return printError("No repo specified") end

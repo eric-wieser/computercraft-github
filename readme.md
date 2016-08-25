@@ -12,9 +12,11 @@ Copy both files in `apis/` to `/apis/`, and put `programs/github` wherever you w
 Usage
 -----
 
-    github clone <user>/<repo> [<branch>|<tag>] [<destination>]
+    github clone <user>/<repo> [-b <branchname> | -t <tagname>] [-a <username:password>] [<destination>]
 
-The branch or tag argument is optional, and defaults to 'master'.
+The branch and tag arguments are optional, and default to 'master'.  You may only specify a branch or tag, you may not specify both.
+
+The authorization argument is optional. If you do not provide an authorization argument you may be limited by github's api rate limits.
 
 The destination folder is optional, and defaults to the current folder name. Watch out - this script will happily overwrite any existing files!
 
