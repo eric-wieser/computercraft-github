@@ -12,7 +12,9 @@ The easiest way to install this project on your computercraft computer is by run
 Usage
 -----
 
-    github clone <user>/<repo name> [destination folder]
+    github clone <user>/<repo> [<branch>|<tag>] [<destination>]
+
+The branch or tag argument is optional, and defaults to 'master'.
 
 The destination folder is optional, and defaults to the current folder name. Watch out - this script will happily overwrite any existing files!
 
