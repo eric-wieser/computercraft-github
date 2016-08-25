@@ -31,6 +31,7 @@ end
 
 local function rewriteDofile(filename, required)
   filename = ('github.rom/%s'):format(filename)
+  required = ('dofile("'):format(required)
   local r = fs.open(filename, 'r')
   local data = r.readAll()
   r.close()
