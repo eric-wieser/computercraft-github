@@ -1,19 +1,17 @@
 local JSON = dofile("apis/dkjson")
 
--- Build a github API url, trying to authenticate (not tested)
+-- Build a github API url, with authorization headers.
 local function getAPI(path, auth)
 	local url = ('https://api.github.com/%s'):format(path)
 	local headers
 	if auth and auth.type == 'oauth' then
-		headers = {
-			['Authorization'] = ('token %s'):format(auth.token)
-		}
+		headers = { ['Authorization'] = ('token %s'):format(auth.token) }
 	end
 	local req = http.get(url, headers)
 	if req then
-		return JSON.decode(req.readAll())
+		return req.getResponseCode(), JSON.decode(req.readAll())
 	else
-		error('Could not get github API from ' ..path)
+		return nil, {}
 	end
 end
 
@@ -24,12 +22,7 @@ local function writeAuth(data)
 	f.write(textutils.serialize(data))
 	f.close()
 end
-local Auth = {}
-Auth.__index = Auth
-Auth.new = function(type, user, token)
-	return setmetatable({type=type, user=user, token=token}, Auth)
-end
-Auth.getAll = function()
+local function getAuthTable()
 	local authTable = {}
 	if fs.exists(authFile) then
 		f = fs.open(authFile, 'r')
@@ -38,17 +31,30 @@ Auth.getAll = function()
 	end
 	return authTable
 end
+local Auth = {}
+Auth.__index = Auth
+Auth.new = function(type, user, token)
+	return setmetatable({type=type, user=user, token=token}, Auth)
+end
 Auth.get = function(user)
-	local authTable = Auth.getAll()
-	return authTable[user]
+	local authTable = getAuthTable()
+	local auth = authTable[user]
+	if auth then
+		auth = Auth.new(auth.type, auth.user, auth.token)
+	end
+	return auth
+end
+Auth.checkToken = function(self)
+	local status, request = getAPI('user', self)
+	return status == 200
 end
 Auth.save = function(self)
-	local authTable = Auth.getAll()
+	local authTable = getAuthTable()
 	authTable[self.user] = self
 	writeAuth(authTable)
 end
 Auth.delete = function(user)
-	local authTable = Auth.getAll()
+	local authTable = getAuthTable()
 	authTable[user] = nil
 	writeAuth(authTable)
 end
@@ -71,10 +77,11 @@ end
 local Tree = {}
 Tree.__index = Tree
 Tree.new = function(repo, sha, path)
-	local data = getAPI(
-		('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha),
-		repo.auth
-	)
+	local url = ('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha)
+	local status, data = getAPI(url, repo.auth)
+	if not status then
+		error('Could not get github API from ' ..url)
+	end
 	if data.tree then
 		local tree = setmetatable({
 			repo=repo, sha=data.sha,
