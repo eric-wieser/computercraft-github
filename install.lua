@@ -58,7 +58,5 @@ end
 rewriteDofile('apis/github', 'apis/dkjson')
 rewriteDofile('programs/github', 'apis/github')
 fs.move('github.rom/github', 'github')
-
-
 print("github by Eric Wieser installed!")
 print("Usage: github clone <user>/<repo name> [destination folder]")
