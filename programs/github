@@ -22,37 +22,24 @@ function progressbar(f)
 end
 
 -- get flag arguments
-local function findFlag(arg)
-	local accepted = {
-		{ name = 'branch', flags = { '-b', '--branch' } },
-		{ name = 'tag', flags = { '-t', '--tag' } },
-		{ name = 'auth', flags = { '-a', '--auth' } }
-	}
-	local isFlag, flagName = false, nil
-	if arg:sub(1,1) == '-' then
-		for _, flagType in pairs(accepted) do
-			for _, flag in pairs(flagType.flags) do
-				if arg == flag then
-					isFlag = true
-					flagName = flagType.name
-					return isFlag, flagName
-				end
-			end
-		end
-		if not isFlag then
-			return printError('Unknown flag argument '..arg)
-		end
-	end
-	return isFlag, flagName
-end
+local acceptedFlags = {
+	['-b'] = 'branch',
+	['--branch'] = 'branch',
+	['-t'] = 'tag',
+	['--tag'] = 'tag',
+	['-a'] = 'auth',
+	['--auth'] = 'auth'
+}
+
+local findFlag = function(arg) return acceptedFlags[arg] end
 
 local passed = {...}
 local args = {}
 local flags = {}
 local flagValue = ''
 for k, arg in pairs(passed) do
-	local isFlag, flagName = findFlag(arg)
-	if isFlag then
+	local flagName = findFlag(arg)
+	if flagName then
 		flags[flagName] = passed[k + 1]
 		flagValue = flags[flagName]
 	elseif arg ~= action and arg ~= flagValue then
@@ -61,7 +48,7 @@ for k, arg in pairs(passed) do
 end
 
 if flags.branch and flags.tag then
-	return printError('please specify a branch or tag.')
+	return printError('--branch and --tag cannot both be specified')
 end
 
 if action == 'clone' then
