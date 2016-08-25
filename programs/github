@@ -39,7 +39,7 @@ local flags = {}
 local flagValue = ''
 for k, arg in pairs(passed) do
 	local flagName = findFlag(arg)
-	if flagName then
+	if flagName and arg ~= flagValue then
 		flags[flagName] = passed[k + 1]
 		flagValue = flags[flagName]
 	elseif arg ~= action and arg ~= flagValue then
