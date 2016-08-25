@@ -31,11 +31,12 @@ end
 
 local function rewriteDofile(filename, required)
   filename = ('github.rom/%s'):format(filename)
+  oldDo = ('dofile("%s'):format(required)
   local r = fs.open(filename, 'r')
   local data = r.readAll()
   r.close()
   local w = fs.open(filename, 'w')
-  data = data:gsub(required, ('github.rom/%s'):format(required))
+  data = data:gsub(oldDo, ('dofile("github.rom/%s'):format(required))
   w.write(data)
   w.close()
 end
