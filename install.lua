@@ -11,7 +11,7 @@ local REPO_BASE = ('https://raw.githubusercontent.com/eric-wieser/computercraft-
 local FILES = {
   'apis/dkjson',
   'apis/github',
-  'programs/github'
+  'programs/github',
   'github'
 }
 
