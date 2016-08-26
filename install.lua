@@ -2,10 +2,12 @@
 -- https://github.com/eric-wieser/computercraft-github
 
 local repo, tree = select(1,...)
+if not tree then
+  -- assume tree as the preferred argument.
+  tree = repo or 'master'
+end
 if not repo then
   repo = 'eric-wieser/computercraft-github'
-if not tree then
-  tree = 'master'
 end
 
 local REPO_BASE = ('https://raw.githubusercontent.com/%s/%s/'):format(repo, tree)
