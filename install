@@ -1,8 +1,8 @@
 -- Install the program by rewriting dofiles, and creating a link to the program
 
-print("Installing...")
+local dest_dir = shell.resolve(select(..., 1) or '_build')
 
-local dest_dir = select(..., 1) or '_build'
+print("Installing to %s...":format(dest_dir))
 
 local copyAndFix(src_file, src_file)
 	local r = fs.open(src_file, 'r')
@@ -22,7 +22,7 @@ end
 
 for _, prog in pairs(fs.list('programs')) do
 	local f = fs.open('/'..prog, 'w')
-	f.write([[loadfile('%s', getfenv())()]]:format(shell.resolve(dest_dir..'/programs/'..prog)))
+	f.write([[loadfile('%s', getfenv())()]]:format(dest_dir..'/programs/'..prog))
 end
 print("github by Eric Wieser installed!")
 dofile('github')
