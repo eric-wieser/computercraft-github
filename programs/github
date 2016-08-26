@@ -31,7 +31,14 @@ local acceptedFlags = {
 	['--auth'] = 'auth'
 }
 
-local findFlag = function(arg) return acceptedFlags[arg] end
+local function findFlag(arg)
+	if arg.sub(1,1) == '-' then
+		if not acceptedFlags[arg] then
+			return printError(('Unknown flag argument %s'):format(arg))
+		end
+	end
+	return acceptedFlags[arg]
+end
 
 local passed = {...}
 local args = {}
