@@ -36,13 +36,13 @@ local findFlag = function(arg) return acceptedFlags[arg] end
 local passed = {...}
 local args = {}
 local flags = {}
-local flagValue = ''
+local lastFlagged = 0
 for k, arg in pairs(passed) do
 	local flagName = findFlag(arg)
-	if flagName and arg ~= flagValue then
+	if flagName and k ~= lastFlagged then
 		flags[flagName] = passed[k + 1]
-		flagValue = flags[flagName]
-	elseif arg ~= action and arg ~= flagValue then
+		lastFlagged = k + 1
+	elseif arg ~= action and k ~= lastFlagged then
 		table.insert(args, arg)
 	end
 end
