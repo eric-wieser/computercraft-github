@@ -45,12 +45,14 @@ local args = {}
 local flags = {}
 local lastFlagged = 0
 for k, arg in pairs(passed) do
-	local flagName = findFlag(arg)
-	if flagName and k ~= lastFlagged then
-		flags[flagName] = passed[k + 1]
-		lastFlagged = k + 1
-	elseif arg ~= action and k ~= lastFlagged then
-		table.insert(args, arg)
+	if k ~= lastFlagged then
+		local flagName = findFlag(arg)
+		if flagName then
+			flags[flagName] = passed[k + 1]
+			lastFlagged = k + 1
+		elseif arg ~= action then
+			table.insert(args, arg)
+		end
 	end
 end
 
