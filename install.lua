@@ -1,12 +1,14 @@
 -- Easy Installer for computercraft-github by Eric Wieser
 -- https://github.com/eric-wieser/computercraft-github
 
-local tree = select(1,...)
+local repo, tree = select(1,...)
+if not repo then
+  repo = 'eric-wieser/computercraft-github'
 if not tree then
   tree = 'master'
 end
 
-local REPO_BASE = ('https://raw.githubusercontent.com/eric-wieser/computercraft-github/%s/'):format(tree)
+local REPO_BASE = ('https://raw.githubusercontent.com/%s/%s/'):format(repo, tree)
 
 local FILES = {
   'apis/dkjson',
