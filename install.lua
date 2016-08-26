@@ -30,13 +30,13 @@ local function makeFile(file_path, data)
 end
 
 local function rewriteDofiles()
-  for _, file in pairs(files) do
+  for _, file in pairs(FILES) do
     local filename = ('github.rom/%s'):format(file)
     local r = fs.open(filename, 'r')
     local data = r.readAll()
     r.close()
     local w = fs.open(filename, 'w')
-    data = data.gsub('dofile("', 'dofile("github.rom/')
+    data = data:gsub('dofile%("', 'dofile("github.rom/')
     w.write(data)
     w.close()
   end
