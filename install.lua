@@ -53,6 +53,9 @@ for key, path in pairs(FILES) do
     makeFile(path, response)
   else
     printError(('Unable to download %s'):format(path))
+    fs.delete('github.rom')
+    fs.delete('github')
+    break
   end
 end
 
