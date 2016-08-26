@@ -22,7 +22,7 @@ end
 
 for _, prog in pairs(fs.list('programs')) do
 	local f = fs.open('/'..prog, 'w')
-	f.write([[loadfile('%s', getfenv())()]]:format(dest_dir..'/programs/'..prog))
+	f.write([[loadfile('%s', getfenv())(...)]]:format(dest_dir..'/programs/'..prog))
 end
 print("github by Eric Wieser installed!")
 dofile('github')
