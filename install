@@ -1,0 +1,28 @@
+-- Install the program by rewriting dofiles, and creating a link to the program
+
+print("Installing...")
+
+local dest_dir = select(..., 1) or '_build'
+
+local copyAndFix(src_file, src_file)
+	local r = fs.open(src_file, 'r')
+	local data = r.readAll()
+	r.close()
+	local w = fs.open(dest, 'w')
+	data = data:gsub('dofile%("', 'dofile("'..dest_dir..'/')
+	w.write(data)
+	w.close()
+end
+
+for _, folder in ipairs({'api', 'programs'})
+	for _, file in pairs(fs.list(folder)) do
+		copyAndFix(folder..'/'..file, dest_dir..'/'..folder..'/'..file)
+	end
+end
+
+for _, prog in pairs(fs.list('programs')) do
+	local f = fs.open('/'..prog, 'w')
+	f.write([[loadfile('%s', getfenv())()]]:format(shell.resolve(dest_dir..'/programs/'..prog)))
+end
+print("github by Eric Wieser installed!")
+dofile('github')

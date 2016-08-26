@@ -7,9 +7,17 @@ Installation
 ------------
 The easiest way to install this project on your computercraft computer is by running:
 
-    pastebin run p8PJVxC4 [<branch>|<tag>]
+    pastebin run zDAQHQdz [<branch>|<tag>]
 
 The branch or tag argument is optional, and defaults to 'master'.
+
+### Updates
+
+To update an existing installation, do:
+
+    > github clone eric-wieser/computercraft-github .
+    ...
+    > install
 
 Usage
 -----
@@ -23,15 +31,16 @@ The destination folder is optional, and defaults to the current folder name. Wat
     > github clone eric-wieser/computercraft-github ccgit
     Discovering files...
     Downloading:
-      github
       readme.md
       apis/dkjson
       apis/github
       programs/github
+      install
+      bootstrap.lua
     [============================================] 100%
     > ls ccgit
     apis      programs
-    github readme.md
+    readme.md bootstrap.lua
 
 ---
 
