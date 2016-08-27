@@ -3,6 +3,8 @@
 local base_url, dest = select(1,...)
 dest = dest or 'computercraft-github'
 
+print("Downloading from %s":format(base_url))
+
 local FILES = {
 	'apis/dkjson',
 	'apis/github',
@@ -28,12 +30,14 @@ end
 for key, path in pairs(FILES) do
 	local try = 0
 	repeat
+		local status, response
 		if try >= 3 then
-			printError(('Unable to download %s'):format(path))
+			printError(('Unable to download %s - status of %s'):format(path, status))
+			printError(response)
 			fs.delete(dest)
 			return
 		end
-		local status, response = request(path)
+		status, response = request(path)
 		try = try + 1
 	until status ~= 200
 end
