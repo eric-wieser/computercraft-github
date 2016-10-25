@@ -134,7 +134,7 @@ if action == subcommands.auth then
 		print(('Deleted github token for user %s'):format(user))
 	else
 		if not token then return printError("No token specified.") end
-		local auth = github.Auth.new('basic', user, token)
+		local auth = github.Auth.new('oauth', user, token)
 		auth:save()
 		print(('Saved github token for user %s'):format(auth.user))
 	end

@@ -2,13 +2,14 @@ local JSON = dofile("apis/dkjson")
 
 -- Build a github API url, trying to authenticate (not tested)
 local function getAPI(path, auth)
-	local url
-	if auth and auth.type == 'basic' then
-		url = ('https://%s:%s@api.github.com/%s'):format(auth.user, auth.token, path)
-	else
-		url = ('https://api.github.com/%s'):format(path)
+	local url = ('https://api.github.com/%s'):format(path)
+	local headers
+	if auth and auth.type == 'oauth' then
+		headers = {
+			['Authorization'] = ('token %s'):format(auth.token)
+		}
 	end
-	local req = http.get(url)
+	local req = http.get(url, headers)
 	if req then
 		return JSON.decode(req.readAll())
 	else
