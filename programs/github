@@ -79,6 +79,43 @@ if flags.branch and flags.tag then
 	return printError('--branch and --tag cannot both be specified')
 end
 
+
+local function hasEnoughSpace(repoSize, freeSpace)
+	-- The value reported by github underestimates the one reported by CC. This tries
+	-- to guess when this matters.
+	local sizeError = 0.2
+
+	local function warnAndContinue()
+		write("Repository may be too large to download, attempt anyway? [Y/n]: ")
+		local validAnswers = { [''] = 'yes', y = 'yes', yes = 'yes', n = 'no', no = 'no' }
+		local input = io.read()
+		while not validAnswers[input:lower()] do
+			print("Please type [y]es or [n]o")
+			input = io.read()
+		end
+		return validAnswers[input:lower()] == 'yes'
+	end
+
+	if repoSize > freeSpace then
+		return false
+	elseif repoSize * (1 + sizeError) > freeSpace then
+		return warnAndContinue()
+	else
+		return true
+	end
+end
+
+local function sizeStr(bytes)
+	local unit = 1024
+	if bytes < unit then
+		return ("%s byte(s)"):format(bytes)
+	else
+		local multi = 10^(1)
+		local KiB = math.floor((bytes/unit) * multi + 0.5) / multi
+		return ("%s KiB"):format(KiB)
+	end
+end
+
 if action == subcommands.clone then
 	-- parse input
 	local repo, dest = args[1], args[2]
@@ -108,8 +145,16 @@ if action == subcommands.clone then
 	local tree = repo:tree(treeName)
 
 	-- download the files
-	print("Downloading:")
 	local totalSize = tree.size
+	local freeSpace = fs.getFreeSpace(dest)
+
+	if not hasEnoughSpace(totalSize, freeSpace) then
+		local errStr = "Repository is %s, but only %s are free on this computer. Aborting!"
+		errStr = errStr:format(sizeStr(totalSize), sizeStr(freeSpace))
+		return printError(errStr)
+	end
+
+	print("Downloading:")
 	local size = 0
 	tree:cloneTo(dest, function(item)
 		-- called every time a download completes
