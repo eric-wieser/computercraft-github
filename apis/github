@@ -33,14 +33,23 @@ local function getAuthTable()
 end
 local Auth = {}
 Auth.__index = Auth
-Auth.new = function(type, user, token)
-	return setmetatable({type=type, user=user, token=token}, Auth)
+Auth.new = function(type, user, token, default)
+	default = default or false
+	return setmetatable({type=type, user=user, token=token, default=default}, Auth)
+end
+Auth.getDefault = function()
+	local authTable = getAuthTable()
+	for k,v in pairs(authTable) do
+		if v.default then
+			return Auth.new(v.type, v.user, v.token, v.default)
+		end
+	end
 end
 Auth.get = function(user)
 	local authTable = getAuthTable()
 	local auth = authTable[user]
 	if auth then
-		auth = Auth.new(auth.type, auth.user, auth.token)
+		auth = Auth.new(auth.type, auth.user, auth.token, v.default)
 	end
 	return auth
 end
@@ -51,6 +60,14 @@ end
 Auth.save = function(self)
 	local authTable = getAuthTable()
 	authTable[self.user] = self
+	-- ensure there is only one default auth.
+	if self.default then
+		for k,v in pairs(authTable) do
+			if v.default and k ~= self.name then
+				v.default = false
+			end
+		end
+	end
 	writeAuth(authTable)
 end
 Auth.delete = function(user)

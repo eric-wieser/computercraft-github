@@ -39,9 +39,9 @@ The Authentication argument is optional. You must first create a user with `gith
 ### Adding Authentication
 To use authenticated requests you must first [create a github](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) api token on your github account. You do not need to provide any api scopes for the token unless you plan on accessing private repositories.
 
-    github auth <user> [<api token> | -d]
+    github auth <user> ([<api token> | -d | --set-default])
 
-The delete argument is optional and will delete the specified user.
+The delete argument is optional and will delete the specified user. The set-default argument is optional and if specified all github requests will be authenticated with the user specified.
 
 **Warning:** data provided to `github auth` will be stored locally on the computercraft computer. You can delete the access token at anytime by hitting the delete button in your personal [access tokens menu](https://github.com/settings/tokens) on github.
 ---
