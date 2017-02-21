@@ -15,6 +15,10 @@ local function getAPI(path, auth)
 	end
 end
 
+local function encodeURI(s)
+	return s:replace(' ', '%20')
+end
+
 -- A class for authorization
 local authFile = '.github-auth'
 local function writeAuth(data)
@@ -136,8 +140,10 @@ Tree.cloneTo = function(self, dest, onProgress)
 			fs.makeDir(path)
 		elseif getmetatable(item) == Blob then
 			local data = http.get(
-				('https://raw.github.com/%s/%s/%s/%s')
-					:format(self.repo.user, self.repo.name, self.sha, gitpath)
+				('https://raw.github.com/%s/%s/%s/%s'):format(
+					self.repo.user, self.repo.name, self.sha,
+					encodeURI(gitpath)
+				)
 			)
 			local h = fs.open(path, 'w')
 			local text = data.readAll()
