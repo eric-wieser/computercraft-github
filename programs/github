@@ -16,10 +16,11 @@ local subcommands = {
 		}
 	},
 	auth = {
-		usage = "github auth <user> [<api token> | -d ]",
+		usage = "github auth <user> [<api token> | -d | --set-default]",
 		flags = {
 			['-d'] = 'delete',
-			['--delete'] = 'delete'
+			['--delete'] = 'delete',
+			['--set-default'] = 'default'
 		}
 	}
 }
@@ -67,8 +68,12 @@ for k, arg in pairs(passed) do
 	if k ~= lastFlagged then
 		local flagName = findFlag(arg)
 		if flagName then
-			flags[flagName] = passed[k + 1] or true
-			lastFlagged = k + 1 or true
+			if passed[k + 1] and not passed[k + 1].sub(1,1) == '-' then
+				flags[flagName] = passed[k + 1]
+			else
+				flags[flagName] = true
+			end
+			lastFlagged = flags[flagName]
 		else
 			table.insert(args, arg)
 		end
@@ -133,12 +138,12 @@ if action == subcommands.clone then
 	if flags.authed then
 		-- if no user is found auth should remain nil.
 		auth = github.Auth.get(flags.authed)
-	end
-
-	if flags.authed and not auth then
-		return printError("Unknown user! Add one with 'git auth'")
-	elseif flags.authed and not auth:checkToken() then
-		return printError("Invalid Token!")
+		if not auth then return printError("Unknown user! Add one with 'git auth'") end
+	else
+		auth = github.Auth.getDefault()
+		if auth and not auth:checkToken() then
+			return printError("Invalid Token!")
+		end
 	end
 
 	-- get file listings
@@ -179,9 +184,14 @@ if action == subcommands.auth then
 	if flags.delete then
 		github.Auth.delete(user)
 		print(('Deleted github token for user %s'):format(user))
+	else if github.Auth.get(user) and flags.default
+		local auth = github.Auth.get(user)
+		auth.default = flags.default
+		auth:save()
+		print(('%s saved as default user.'):format(user))
 	else
 		if not token then return printError("No token specified.") end
-		local auth = github.Auth.new('oauth', user, token)
+		local auth = github.Auth.new('oauth', user, token, flags.default)
 		if auth:checkToken() then
 			auth:save()
 			print(('Saved github token for user %s'):format(auth.user))
