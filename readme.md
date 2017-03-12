@@ -7,9 +7,17 @@ Installation
 ------------
 The easiest way to install this project on your computercraft computer is by running:
 
-    pastebin run p8PJVxC4 [<branch>|<tag>]
+    pastebin run zDAQHQdz [<branch>|<tag>]
 
 The branch or tag argument is optional, and defaults to 'master'.
+
+### Updates
+
+To update an existing installation, do:
+
+    > github clone eric-wieser/computercraft-github .
+    ...
+    > install
 
 Usage
 -----
@@ -26,15 +34,16 @@ The Authentication argument is optional. You must first create a user with `gith
     > github clone eric-wieser/computercraft-github ccgit
     Discovering files...
     Downloading:
-      github
       readme.md
       apis/dkjson
       apis/github
       programs/github
+      install
+      bootstrap.lua
     [============================================] 100%
     > ls ccgit
     apis      programs
-    github readme.md
+    readme.md bootstrap.lua
 
 ### Adding Authentication
 To use authenticated requests you must first [create a github](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) api token on your github account. You do not need to provide any api scopes for the token unless you plan on accessing private repositories.
