@@ -27,7 +27,10 @@ local function request(url_path)
 end
 
 local function makeFile(file_path, data)
-	local file = fs.open('github.rom/'..file_path,'w')
+	local path = 'github.rom/'..file_path
+	local dir = path:match('(.*/)')
+	fs.makeDir(dir)
+	local file = fs.open(path,'w')
 	file.write(data)
 	file.close()
 end
