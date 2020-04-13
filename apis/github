@@ -155,6 +155,16 @@ Tree.cloneTo = function(self, dest, onProgress)
 end
 Tree.fullPath = Blob.fullPath
 
+-- A class for a release
+local Release = {}
+Release.__index = Release
+Release.new = function(repo, tag)
+	return setmetatable({repo=repo, tag=tag}, Release)
+end
+Release.tree = function(self)
+	return self.repo:tree(self.tag)
+end
+
 -- A class for a repository
 local __repoPriv = setmetatable({}, {mode='k'})
 local Repository = {}
@@ -171,6 +181,19 @@ Repository.tree = function(self, sha)
 	end
 	return __repoPriv[self].trees[sha]
 end
+local function releaseFromURL(url, repo)
+	local status, data = getAPI(url, repo.auth)
+	if not status then
+		error('Could not get release github API from ' .. url)
+	end
+	return Release.new(repo, data["tag_name"])
+end
+Repository.latestRelease = function(self)
+	return releaseFromURL(('repos/%s/%s/releases/latest'):format(self.user, self.name), self)
+end
+Repository.releaseForTag = function(self, tag)
+	return releaseFromURL(('repos/%s/%s/releases/tags/%s'):format(self.user, self.name, tag), self)
+end
 Repository.__tostring = function(self) return ("Repo@%s/%s"):format(self.user, self.name) end
 
 -- Export members
@@ -179,5 +202,6 @@ github.Repository = Repository
 github.Blob = Blob
 github.Tree = Tree
 github.Auth = Auth
+github.Release = Release
 github.repo = Repository.new
 return github
