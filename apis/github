@@ -89,11 +89,12 @@ end
 -- A class for a tree (aka a folder)
 local Tree = {}
 Tree.__index = Tree
-Tree.new = function(repo, sha, path)
+Tree.new = function(repo, sha, path, treeSha)
 	return setmetatable({
 		repo = repo,
 		sha = sha,
-		path = path or ''
+		path = path or '',
+		treeSha = treeSha
 	}, Tree)
 end
 Tree.getContents = function(self)
@@ -101,23 +102,27 @@ Tree.getContents = function(self)
 		return self.contents
 	end
 
-	local url = ('repos/%s/%s/git/trees/%s'):format(self.repo.user, self.repo.name, self.sha)
+	local url = ('repos/%s/%s/git/trees/%s'):format(self.repo.user, self.repo.name, self.treeSha or self.sha)
 	local status, data = getAPI(url, self.repo.auth)
 	if not status then
-		error('Could not get github API from ' ..url)
+		error('Could not get github API from ' .. url)
 	end
 	if data.tree then
-		self.sha = data.sha
+		-- Overwrite pseudo-SHAs like tag or branch names with actual SHAs.
+		if not self.treeSha then
+			self.sha = data.sha
+			self.treeSha = data.sha
+		end
 		self.size = 0
 		self.contents = {}
 		for _, childdata in ipairs(data.tree) do
 			childdata.fullPath = fs.combine(self:fullPath(), childdata.path)
 			local child
 			if childdata.type == 'blob' then
-				child = Blob.new(self.repo, childdata.sha, childdata.path)
+				child = Blob.new(self.repo, self.sha, childdata.path)
 				child.size = childdata.size
 			elseif childdata.type == 'tree' then
-				child = Tree.new(self.repo, childdata.sha, childdata.path)
+				child = Tree.new(self.repo, self.sha, childdata.path, childdata.sha)
 			else
 				error("Unknown tree node type", JSON.encode(childdata))
 			end
