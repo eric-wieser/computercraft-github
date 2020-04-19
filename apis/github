@@ -98,8 +98,8 @@ Tree.new = function(repo, sha, path, treeSha)
 	}, Tree)
 end
 Tree.getContents = function(self)
-	if self.contents then
-		return self.contents
+	if self._contents then
+		return self._contents
 	end
 
 	local url = ('repos/%s/%s/git/trees/%s'):format(self.repo.user, self.repo.name, self.treeSha or self.sha)
@@ -114,7 +114,7 @@ Tree.getContents = function(self)
 			self.treeSha = data.sha
 		end
 		self.size = 0
-		self.contents = {}
+		self._contents = {}
 		for _, childdata in ipairs(data.tree) do
 			childdata.fullPath = fs.combine(self:fullPath(), childdata.path)
 			local child
@@ -128,9 +128,9 @@ Tree.getContents = function(self)
 			end
 			self.size = self.size + (child.size or 0)
 			child.parent = self
-			table.insert(self.contents, child)
+			table.insert(self._contents, child)
 		end
-		return self.contents
+		return self._contents
 	else
 		error("No tree data returned", JSON.encode(data))
 	end
