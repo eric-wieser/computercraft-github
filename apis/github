@@ -130,14 +130,6 @@ Tree.getContents = function(self)
 		error("No tree data returned", JSON.encode(data))
 	end
 end
-local function walkTree(t, level)
-	for _, item in ipairs(t:getContents()) do
-		coroutine.yield(item, level)
-		if getmetatable(item) == Tree then
-			walkTree(item, level + 1)
-		end
-	end
-end
 Tree.getFullSize = function(self)
 	local size = 0
 	for item in self:iter() do
@@ -155,9 +147,18 @@ Tree.getChild = function(self, path)
 	end
 end
 Tree.iter = function(self)
-	return coroutine.wrap(function()
-		walkTree(self, 0)
-	end)
+	local stack = {{self, 0}}
+	return function()
+		local entry = table.remove(stack)
+		if entry then
+			if getmetatable(entry[1]) == Tree then
+				for _, child in ipairs(entry[1]:getContents()) do
+					table.insert(stack, {child, entry[2] + 1})
+				end
+			end
+			return unpack(entry)
+		end
+	end
 end
 Tree.cloneTo = function(self, dest, onProgress)
 	if not fs.exists(dest) then
