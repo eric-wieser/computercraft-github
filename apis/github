@@ -186,6 +186,7 @@ local function releaseFromURL(url, repo)
 	if not status then
 		error('Could not get release github API from ' .. url)
 	end
+	-- format is described at https://developer.github.com/v3/repos/releases/
 	return Release.new(repo, data["tag_name"])
 end
 Repository.latestRelease = function(self)
