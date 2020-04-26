@@ -16,7 +16,7 @@ local function getAPI(path, auth)
 end
 
 local function encodeURI(s)
-	return s:gsub(' ', '%%20')
+	return s:gsub('([^/]+)', textutils.urlEncode)
 end
 
 -- A class for authorization
