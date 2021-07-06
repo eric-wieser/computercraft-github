@@ -63,6 +63,25 @@ Auth.delete = function(user)
 	writeAuth(authTable)
 end
 
+-- A class for a commit
+local Commit = {}
+Commit.__index = Commit
+Commit.new = function(repo, sha)
+	-- Documented here: https://developer.github.com/v3/git/trees/
+	local url = ('repos/%s/%s/git/commits/%s'):format(repo.user, repo.name, sha)
+	local status, data = getAPI(url, repo.auth)
+	if not status then
+		error('Could not get commit github API from ' ..url)
+	end
+	return setmetatable({
+		repo = repo,
+		sha = sha,
+		author = data.author,
+		committer = data.committer,
+		message = data.message
+	}, Commit)
+end
+
 -- A class for a blob (aka a file)
 local Blob = {}
 Blob.__index = Blob
@@ -120,6 +139,9 @@ local function walkTree(t, level)
 			walkTree(item, level + 1)
 		end
 	end
+end
+Tree.getCommit = function(self)
+	return Commit.new(self.repo, self.sha)
 end
 Tree.iter = function(self)
 	return coroutine.wrap(function()
@@ -200,6 +222,7 @@ Repository.__tostring = function(self) return ("Repo@%s/%s"):format(self.user, s
 -- Export members
 local github = {}
 github.Repository = Repository
+github.Commit = Commit
 github.Blob = Blob
 github.Tree = Tree
 github.Auth = Auth
