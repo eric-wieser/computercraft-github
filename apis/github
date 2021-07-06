@@ -76,55 +76,94 @@ Blob.fullPath = function(self)
 		return self.path
 	end
 end
+Blob.getContents = function(self)
+	local data = http.get(
+		('https://raw.github.com/%s/%s/%s/%s'):format(
+			self.repo.user, self.repo.name, self.sha,
+			encodeURI(self:fullPath())
+		)
+	)
+	return data.readAll()
+end
 
 -- A class for a tree (aka a folder)
 local Tree = {}
 Tree.__index = Tree
-Tree.new = function(repo, sha, path)
-	local url = ('repos/%s/%s/git/trees/%s'):format(repo.user, repo.name, sha)
-	local status, data = getAPI(url, repo.auth)
+Tree.new = function(repo, sha, path, treeSha)
+	return setmetatable({
+		repo = repo,
+		sha = sha,
+		path = path or '',
+		treeSha = treeSha
+	}, Tree)
+end
+Tree.getContents = function(self)
+	if self._contents then
+		return self._contents
+	end
+
+	local url = ('repos/%s/%s/git/trees/%s'):format(self.repo.user, self.repo.name, self.treeSha or self.sha)
+	local status, data = getAPI(url, self.repo.auth)
 	if not status then
-		error('Could not get github API from ' ..url)
+		error('Could not get github API from ' .. url)
 	end
 	if data.tree then
-		local tree = setmetatable({
-			repo=repo, sha=data.sha,
-			path=path or '', size=0,
-			contents={}
-		}, Tree)
+		-- Overwrite pseudo-SHAs like tag or branch names with actual SHAs.
+		if not self.treeSha then
+			self.sha = data.sha
+			self.treeSha = data.sha
+		end
+		self.size = 0
+		self._contents = {}
 		for _, childdata in ipairs(data.tree) do
-			childdata.fullPath = fs.combine(tree:fullPath(), childdata.path)
+			childdata.fullPath = fs.combine(self:fullPath(), childdata.path)
 			local child
 			if childdata.type == 'blob' then
-				child = Blob.new(repo, childdata.sha, childdata.path)
+				child = Blob.new(self.repo, self.sha, childdata.path)
 				child.size = childdata.size
 			elseif childdata.type == 'tree' then
-				child = Tree.new(repo, childdata.sha, childdata.path)
+				child = Tree.new(self.repo, self.sha, childdata.path, childdata.sha)
 			else
-				error("uh oh", JSON.encode(childdata))
-				child = childdata
+				error("Unknown tree node type", JSON.encode(childdata))
 			end
-			tree.size = tree.size + child.size
-			child.parent = tree
-			table.insert(tree.contents, child)
+			self.size = self.size + (child.size or 0)
+			child.parent = self
+			table.insert(self._contents, child)
 		end
-		return tree
+		return self._contents
 	else
-		error("uh oh", JSON.encode(data))
+		error("No tree data returned", JSON.encode(data))
 	end
 end
-local function walkTree(t, level)
-	for _, item in ipairs(t.contents) do
-		coroutine.yield(item, level)
-		if getmetatable(item) == Tree then
-			walkTree(item, level + 1)
+Tree.getFullSize = function(self)
+	local size = 0
+	for item in self:iter() do
+		if getmetatable(item) == Blob then
+			size = size + item.size
+		end
+	end
+	return size
+end
+Tree.getChild = function(self, path)
+	for _, item in ipairs(self:getContents()) do
+		if item.path == path then
+			return item
 		end
 	end
 end
 Tree.iter = function(self)
-	return coroutine.wrap(function()
-		walkTree(self, 0)
-	end)
+	local stack = {{self, 0}}
+	return function()
+		local entry = table.remove(stack)
+		if entry then
+			if getmetatable(entry[1]) == Tree then
+				for _, child in ipairs(entry[1]:getContents()) do
+					table.insert(stack, {child, entry[2] + 1})
+				end
+			end
+			return unpack(entry)
+		end
+	end
 end
 Tree.cloneTo = function(self, dest, onProgress)
 	if not fs.exists(dest) then
@@ -134,19 +173,12 @@ Tree.cloneTo = function(self, dest, onProgress)
 	end
 
 	for item in self:iter() do
-		local gitpath = item:fullPath()
-		local path = fs.combine(dest, gitpath)
+		local path = fs.combine(dest, item:fullPath())
 		if getmetatable(item) == Tree then
 			fs.makeDir(path)
 		elseif getmetatable(item) == Blob then
-			local data = http.get(
-				('https://raw.github.com/%s/%s/%s/%s'):format(
-					self.repo.user, self.repo.name, self.sha,
-					encodeURI(gitpath)
-				)
-			)
+			local text = item:getContents()
 			local h = fs.open(path, 'w')
-			local text = data.readAll()
 			h.write(text)
 			h.close()
 		end
@@ -166,20 +198,26 @@ Release.tree = function(self)
 end
 
 -- A class for a repository
-local __repoPriv = setmetatable({}, {mode='k'})
 local Repository = {}
 Repository.__index = Repository
 Repository.new = function(user, name, auth)
-	local r = setmetatable({user=user, name=name, auth=auth}, Repository)
-	__repoPriv[r] = {trees={}}
-	return r
+	return setmetatable({
+		user = user,
+		name = name,
+		auth = auth,
+		_treeCache = {}
+	}, Repository)
 end
 Repository.tree = function(self, sha)
 	sha = sha or "master"
-	if not __repoPriv[self].trees[sha] then
-		__repoPriv[self].trees[sha] = Tree.new(self, sha)
+	local cachedTree = self._treeCache[sha]
+	local newTree = Tree.new(self, sha)
+	newTree:getContents() -- Force resolution of commit-ish
+	if cachedTree and newTree.sha == cachedTree.sha then
+		return cachedTree
 	end
-	return __repoPriv[self].trees[sha]
+	self._treeCache[sha] = newTree
+	return newTree
 end
 local function releaseFromURL(url, repo)
 	local status, data = getAPI(url, repo.auth)

@@ -147,7 +147,7 @@ if action == subcommands.clone then
 	local tree = repo:tree(treeName)
 
 	-- download the files
-	local totalSize = tree.size
+	local totalSize = tree:getFullSize()
 	local freeSpace = fs.getFreeSpace(dest)
 
 	if not hasEnoughSpace(totalSize, freeSpace) then
