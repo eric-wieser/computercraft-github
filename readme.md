@@ -1,6 +1,9 @@
 computercraft-github
 ====================
 
+> :warning: **This project is no longer maintained**. I am no longer actively using computercraft, and so have no way to meaningfully review PRs or fix issues.
+> See [the list of forks](https://github.com/eric-wieser/computercraft-github/network) for more up to date versions.
+
 Seen these cool projects on github? Pain to download? This program is for you!
 
 Installation
